@@ -128,7 +128,6 @@ module.exports = function () {
 
     function _responseIntercept(res) {
         var token;
-
         if (this.options.http._invalidToken) {
             this.options.http._invalidToken.call(this, res);
         }
@@ -229,7 +228,30 @@ module.exports = function () {
     }
 
     function _loginPerform(data) {
-        __duckPunch.call(this, 'login', data);
+        _this = this
+        if (data.awsLogin !== true) {
+            __duckPunch.call(this, 'login', data);
+        }
+        else {
+            var _this = this,
+                success = data.success;
+
+            data = __utils.extend(this.options['loginData'], [data]);
+
+            data.success = function (res) {
+                data.success = success;
+                _this.options['loginProcess'].call(_this, res, data);
+            };
+            var loginClick = data.awsLoginClick;
+            loginClick(data.data)
+                .then(res => {
+                    _responseIntercept.call(_this, res)
+                    data.success(res)
+                },
+                data.error)
+
+        }
+
     }
 
     function _loginProcess(res, data) {
